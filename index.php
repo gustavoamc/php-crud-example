@@ -1,51 +1,39 @@
 <?php
-include 'conexao.php';
+    require_once 'Connection.php';
+    require_once 'Users.php';
 
-// CREATE
-if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["submit"])) {
-    $nome = $_POST["nome"];
-    $email = $_POST["email"];
+    $conn = (new Connection())->getConn();
+    $users = new Users($conn);
 
-    $sql = "INSERT INTO usuarios (nome, email) VALUES ('$nome', '$email')";
-    $conexao->query($sql);
-}
+    if ($_SERVER["REQUEST_METHOD"] == "GET") {
+        $allUsers = $users->read();
+    }
 
-// READ
-$sql = "SELECT * FROM usuarios";
-$resultado = $conexao->query($sql);
+    if ($_SERVER["REQUEST_METHOD"] == "GET"  && isset($_GET['id'])) {
+        $userId = $_GET['id'];
+        $singleUser = $users->readById($userId);
+    }
 
-// UPDATE
-// em editar.php
+    if ($_SERVER["REQUEST_METHOD"] == "POST") {
+        $name = $_POST["name"];
+        $email = $_POST["email"];
+        echo $users->create($name, $email);
+        header( "refresh:3;url=home.php" );
+    }
 
-// DELETE
-// em excluir.php
+    if ($_SERVER["REQUEST_METHOD"] == "PATCH") {
+        $_PATCH = json_decode(file_get_contents("php://input"), true);
+        $id = $_PATCH["id"];
+        $name = $_PATCH["name"];
+        $email = $_PATCH["email"];
+        echo $users->update($id, $name, $email);
+        header( "refresh:3;url=home.php" );
+    }
+
+    if ($_SERVER["REQUEST_METHOD"] == "DELETE") {
+        $_DELETE = json_decode(file_get_contents("php://input"), true);
+        $id = $_DELETE["id"];
+        echo $users->delete($id);
+        header( "refresh:3;url=home.php" );
+    }
 ?>
-
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <title>CRUD em PHP</title>
-</head>
-<body>
-    <h1>CRUD em PHP</h1>
-
-    <form method="POST" action="index.php">
-        <label for="nome">Nome:</label>
-        <input type="text" name="nome" required>
-        <label for="email">Email:</label>
-        <input type="email" name="email" required>
-        <button type="submit" name="submit">Adicionar Usuário</button>
-    </form>
-
-    <h2>Lista de Usuários:</h2>
-    <ul>
-        <?php
-        while ($row = $resultado->fetch()) {
-            echo "<li>{$row['nome']} - {$row['email']} (<a href='editar.php?id={$row['id']}'>Editar</a> |
-              <a href='excluir.php?id={$row['id']}'>Excluir</a>) </li>";
-        }
-        ?>
-    </ul>
-</body>
-</html>
